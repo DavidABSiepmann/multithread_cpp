@@ -4,7 +4,7 @@
 #include <chrono>
 #include <thread>
 
-// /usr/bin/cpp -g main.cpp -pthread -o main
+// /usr/bin/g++ -g main.cpp -pthread -o main
 
 class thread_base
 {
@@ -14,7 +14,7 @@ class thread_base
         {
             active = false;
         }
-        virtual void start ( std::mutex *mtx )
+        virtual void start ( void )
         {
             if ( active )
                 return;
@@ -23,7 +23,7 @@ class thread_base
 
             while( active )
             {
-                this->run( mtx );
+                this->run( );
             }
         }
         virtual void stop ( void )
@@ -34,11 +34,12 @@ class thread_base
         {
             return active;
         }
-        virtual void run ( std::mutex *mtx ) = 0;
+        virtual void run ( void ) = 0;
 };
 
 class capture : public thread_base
 {
+    std::mutex mtx;
     int buffer;
     uint8_t index = 0;
     public:
@@ -46,29 +47,29 @@ class capture : public thread_base
         {
             buffer = 0;
         }
-        void run( std::mutex *mtx )
+        void run( void )
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(45));
-            mtx->lock();
+            mtx.lock();
 
             buffer+=5;
             index++;
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            mtx->unlock();
+            mtx.unlock();
 
             printf("[capture] novo valor: %d\n", buffer);
         }
-        int read(std::mutex *mtx, int *dado )
+        int read( int *dado )
         {
             int ret = 0;
 
-            mtx->lock();
+            mtx.lock();
 
             *dado = buffer;
             ret = index;
 
-            mtx->unlock();
+            mtx.unlock();
 
             return ret;
         }
@@ -94,7 +95,7 @@ class save : public thread_base
         { 
             this->init(cap_);
         };
-        void run( std::mutex *mtx )
+        void run( void )
         {
             if( !cap )
             {
@@ -103,7 +104,7 @@ class save : public thread_base
             }
             
             int val;
-            uint8_t index_temp = cap->read( mtx, &val );
+            uint8_t index_temp = cap->read( &val );
 
             if ( index_temp != index )
             {
@@ -139,7 +140,7 @@ class process : public thread_base
         { 
             this->init(cap_);
         };
-        void run( std::mutex *mtx )
+        void run( void )
         {
             if( !cap )
             {
@@ -148,7 +149,7 @@ class process : public thread_base
             }
 
             int val;
-            uint8_t index_temp = cap->read( mtx, &val );
+            uint8_t index_temp = cap->read( &val );
 
             if ( index_temp != index )
             {
@@ -182,9 +183,9 @@ class Pipeline
         void start( void )
         {
             //Cria e inicia as threads
-            t_cap = std::thread( &capture::start, &cap, &semaforo );
-            t_save = std::thread( &save::start, &sv, &semaforo );
-            t_pr = std::thread( &process::start, &pr, &semaforo );
+            t_cap = std::thread( &capture::start, &cap );
+            t_save = std::thread( &save::start, &sv );
+            t_pr = std::thread( &process::start, &pr );
         }
 
         void stop( void )
@@ -203,7 +204,7 @@ class Pipeline
 
 
 //Para compilar
-//$ /usr/bin/cpp -g main.cpp -pthread -o main
+//$ /usr/bin/g++ -g main.cpp -pthread -o main
 
 int main( void )
 {
