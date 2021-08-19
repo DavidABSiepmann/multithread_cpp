@@ -110,14 +110,14 @@ class process_B : public thread_base
     uint8_t index;
 
     /// Ponteiro para uma classe de source
-    source_process *cap;
+    source_B *cap;
 
     /**
      * @brief Inicializa a classe
      * 
      * @param cap_ ponteiro para classe source
      */
-    void init( source_process *cap_ )
+    void init( source_B *cap_ )
     {
         index = 0;
         cap = cap_;
@@ -138,7 +138,7 @@ class process_B : public thread_base
          * 
          * @param cap_ ponteiro para classe source
          */
-        process_B( source_process *cap_ ) : thread_base()
+        process_B( source_B *cap_ ) : thread_base()
         { 
             this->init(cap_);
         };
@@ -161,7 +161,7 @@ class process_B : public thread_base
             }
             
             /// Armazena valor do buffer nesta classe
-            buffer_source_process val;
+            buffer_source_B val;
 
             /// Efetua leitura do buffer e o index
             cap->read( &val );

@@ -12,7 +12,7 @@
  * Mas como poderiam ser diferentes será criado outra struct. 
  * 
  */
-struct buffer_source_process
+struct buffer_source_B
 {
     /// Buffer de dados
     /// Não pode ser manipulado sem ter efetuado a aquisição do semáforo
@@ -39,7 +39,7 @@ class source_B : public thread_base
 
     source_A *cap;
 
-    buffer_source_process buffer;
+    buffer_source_B buffer;
 
     /**
      * @brief Inicializa o classe
@@ -139,7 +139,7 @@ class source_B : public thread_base
          * @param dado ponteiro pegar o valor que está no buffer
          * @return int valor do index de atualização
          */
-        uint8_t read( buffer_source_process *dado )
+        uint8_t read( buffer_source_B *dado )
         {
             uint8_t ret = 0;
 
