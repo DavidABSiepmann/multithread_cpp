@@ -1,9 +1,14 @@
 
-#include "thread_utils.h"
-
 #ifndef SORCE_THREADS_H
 #define SORCE_THREADS_H
 
+#include "thread_utils.h"
+#include "profile_print.h"
+
+/**
+ * @brief Estrutura para armazenar buffers da clase de coelta A
+ * 
+ */
 struct buffer_source_A
 {
     /// Buffer de dados
@@ -44,18 +49,27 @@ class source_A : public thread_base
         {
             /// Adquire o semáforo, para utilizar o ultimo valor do buffer
             mtx.lock();
+            startProfile("sA_mtx");
 
             /// Simula a aquisição de um novo valor
             int temp_buffer = buffer.data + 5;
 
+            /// Siluma tempo para copiar o valor
+            std::this_thread::sleep_for(std::chrono::milliseconds(3));
+            
+            stopProfile("sA_mtx");
             /// Libera o semáforo
             mtx.unlock();
+            startProfile("sA");
 
             /// Siluma tempo para capturar o novo valor
             std::this_thread::sleep_for(std::chrono::milliseconds(45));
+            
+            stopProfile("sA");
 
             /// Adquire o semáforo, para modificar buffer
             mtx.lock();
+            startProfile("sA_mtx");
 
             /// Atualiza buffer com o novo valor
             buffer.data = temp_buffer;
@@ -66,11 +80,12 @@ class source_A : public thread_base
             /// Simula tempo para efetuar a alteração no dado do buffer
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
+            stopProfile("sA_mtx");
             /// Libera o semáforo
             mtx.unlock();
 
             /// Debug informa que um novo valor foi gerado
-            printf("[source_A] novo valor: %d\n", buffer.data);
+            // printf("[source_A] novo valor: %d\n", buffer.data);
         }
 
         /**
@@ -86,10 +101,12 @@ class source_A : public thread_base
             uint8_t ret = 0;
 
             mtx.lock();
+            startProfile("sA_mtx");
 
             *dado = buffer;
             ret = buffer.index;
 
+            stopProfile("sA_mtx");
             mtx.unlock();
 
             return ret;

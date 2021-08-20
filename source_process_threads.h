@@ -97,9 +97,11 @@ class source_B : public thread_base
 
             if ( val.index != index )
             {
+                startProfile("sB");
                 process_buffer( &val.data );
                 //Simula tempo do processo
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                stopProfile("sB");
             }
             
             index = val.index;
@@ -112,7 +114,7 @@ class source_B : public thread_base
          */
         void process_buffer( int *value )
         {
-            printf("[source_B] dado lido val: %d\n", *value);
+            // printf("[source_B] dado lido val: %d\n", *value);
 
             int temp_value = *value + 1000;
 
@@ -120,6 +122,7 @@ class source_B : public thread_base
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
             mtx.lock();
+            startProfile("sB_mtx");
 
             buffer.data = temp_value;
             buffer.index++;
@@ -127,6 +130,7 @@ class source_B : public thread_base
             //Simula tempo atualizar buffer
             std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
+            stopProfile("sB_mtx");
             mtx.unlock();
         }
 
@@ -144,10 +148,12 @@ class source_B : public thread_base
             uint8_t ret = 0;
 
             mtx.lock();
+            startProfile("sB_mtx");
 
             *dado = buffer;
             ret = buffer.index;
 
+            stopProfile("sB_mtx");
             mtx.unlock();
 
             return ret;

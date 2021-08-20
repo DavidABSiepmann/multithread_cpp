@@ -7,6 +7,8 @@ int main( void )
 {
     Pipeline mt;
 
+    printf("thread,time,status\n");
+
     //Inicia pipeline
     mt.start();
 

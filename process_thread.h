@@ -76,11 +76,13 @@ class process_A : public thread_base
             /// Verifica se é um valor novo
             if ( val.index != index )
             {
+                startProfile("pcA");
                 /// Efetua o processamento
                 process_buffer( &val.data );
 
                 /// Simula o tempo de efeutar o processo
                 std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                stopProfile("pcA");
             }
 
             index = val.index;
@@ -93,7 +95,7 @@ class process_A : public thread_base
          */
         void process_buffer( int *buffer )
         {
-            printf("[process_A] salvando val: %d\n", *buffer);
+            // printf("[process_A] salvando val: %d\n", *buffer);
         }
 };
 
@@ -169,11 +171,13 @@ class process_B : public thread_base
             /// Verifica se é um valor novo
             if ( val.index != index )
             {
+                startProfile("pcB");
                 /// Efetua o processamento
                 process_buffer( &val.data );
 
                 /// Simula o tempo de efeutar o processo
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                std::this_thread::sleep_for(std::chrono::milliseconds(57));
+                stopProfile("pcB");
             }
 
             index = val.index;
@@ -186,7 +190,7 @@ class process_B : public thread_base
          */
         void process_buffer( int *buffer )
         {
-            printf("[process_B] salvando val: %d\n", *buffer);
+            // printf("[process_B] salvando val: %d\n", *buffer);
         }
 };
 
