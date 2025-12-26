@@ -66,33 +66,30 @@ TEST(StressTest, MultiplePipelinesParallel) {
     reset_processed_items();
     
     const int NUM_PIPELINES = 3;
-    std::vector<Pipeline*> pipelines;
-    std::vector<std::thread> threads;
+    std::vector<std::unique_ptr<Pipeline>> pipelines;
+    std::vector<std::unique_ptr<BenchConfig>> configs;
     
     // Criar múltiplos pipelines
     for (int i = 0; i < NUM_PIPELINES; i++) {
-        BenchConfig *cfg = new BenchConfig();
+        auto cfg = std::make_unique<BenchConfig>();
         cfg->work_us = 5;
-        pipelines.push_back(new Pipeline(cfg));
+        configs.push_back(std::move(cfg));
+        pipelines.push_back(std::make_unique<Pipeline>(configs.back().get()));
     }
     
     // Iniciar todos em paralelo
-    for (auto p : pipelines) {
+    for (auto& p : pipelines) {
         p->start();
     }
     
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Parar todos
-    for (auto p : pipelines) {
+    for (auto& p : pipelines) {
         p->stop();
     }
     
-    // Cleanup
-    for (auto p : pipelines) {
-        delete p;
-    }
-    
+    // Cleanup (automatic via unique_ptr)
     long long items = get_processed_items();
     EXPECT_GT(items, 0);
 }
