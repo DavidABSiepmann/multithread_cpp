@@ -2,3 +2,5 @@
 main
 build
 html
+outputs/*
+Testing

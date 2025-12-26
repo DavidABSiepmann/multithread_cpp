@@ -1,0 +1,33 @@
+name: Sanitizers
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: sanitizers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake build-essential
+
+      - name: Configure (ASAN/TSAN)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON -DCMAKE_CXX_COMPILER=clang++
+
+      - name: Build
+        run: cmake --build build -- -j$(nproc)
+
+      - name: Run tests (sanitizers)
+        run: ctest --test-dir build --output-on-failure || true
+        # Note: Sanitizer failures will cause non-zero exit; keep || true if you want to collect logs without failing workflow

@@ -1,0 +1,29 @@
+name: Nightly Stress
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # runs at 03:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -- -j$(nproc)
+
+      - name: Run stress tests
+        run: |
+          # keep exit code so workflow reports failures, but collect artifacts/logs regardless
+          ./build/tests/unit_tests --gtest_filter="StressTest.*" --gtest_color=yes
+
+      - name: Upload stress artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-logs
+          path: /tmp/*.csv

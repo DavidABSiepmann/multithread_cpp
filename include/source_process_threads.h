@@ -1,6 +1,7 @@
 
 #include "thread_utils.h"
 #include "source_threads.h"
+#include <condition_variable>
 
 #ifndef SOURCE_PROCESS_THREADS_H
 #define SOURCE_PROCESS_THREADS_H
@@ -17,10 +18,6 @@ struct buffer_source_B
     /// Buffer de dados
     /// Não pode ser manipulado sem ter efetuado a aquisição do semáforo
     int data;
-
-    /// Index de atualização do buffer, a cada mudança do
-    /// buffer index será incrementado 1
-    uint8_t index;
 };
 
 
@@ -29,17 +26,16 @@ struct buffer_source_B
  * 
  * Está classe efetua o processamento de uma outra source,
  * gerando uma nova informação que poderá ser utilizada por outras
- * threads. Devendo ser thread-safe
+ * threads. Devendo ser thread-safe. Usa condition_variable para
+ * notificar leitores sobre novos dados processados.
  * 
  */
 class source_B : public thread_base
 {
-    /// Armazena o ultimo index lido da source
-    uint8_t index;
-
     source_A *cap;
 
     buffer_source_B buffer;
+    std::condition_variable cv_;
 
     /**
      * @brief Inicializa o classe
@@ -48,11 +44,8 @@ class source_B : public thread_base
      */
     void init( source_A *cap_ )
     {
-        index = 0;
         cap = cap_;
-
         buffer.data = 0;
-        buffer.index = 0;
     }
 
     public:
@@ -84,55 +77,14 @@ class source_B : public thread_base
          * disponibilizada pelo seu buffer
          * 
          */
-        void run( void )
-        {
-            if( !cap )
-            {
-                printf("[source_B] Capture não inicado!!\n");
-                return;
-            }
-
-            buffer_source_A val;
-            cap->read( &val );
-
-            if ( val.index != index )
-            {
-                startProfile("sB");
-                process_buffer( &val.data );
-                //Simula tempo do processo
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                stopProfile("sB");
-            }
-            
-            index = val.index;
-        }
+        void run( void ) override;
 
         /**
          * @brief Efetua o processamento do dado lido, gerando um novo dado
          * 
          * @param buffer ponteiro para o dado
          */
-        void process_buffer( int *value )
-        {
-            // printf("[source_B] dado lido val: %d\n", *value);
-
-            int temp_value = *value + 1000;
-
-            //Simula tempo processamento
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-            mtx.lock();
-            startProfile("sB_mtx");
-
-            buffer.data = temp_value;
-            buffer.index++;
-            
-            //Simula tempo atualizar buffer
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
-
-            stopProfile("sB_mtx");
-            mtx.unlock();
-        }
+        void process_buffer( int *value );
 
         /**
          * @brief Efetua leitura do buffer, do valor que foi gerado
@@ -141,23 +93,9 @@ class source_B : public thread_base
          * Realiza a leitura do buffer de modo thread-safe
          * 
          * @param dado ponteiro pegar o valor que está no buffer
-         * @return int valor do index de atualização
          */
-        uint8_t read( buffer_source_B *dado )
-        {
-            uint8_t ret = 0;
-
-            mtx.lock();
-            startProfile("sB_mtx");
-
-            *dado = buffer;
-            ret = buffer.index;
-
-            stopProfile("sB_mtx");
-            mtx.unlock();
-
-            return ret;
-        }
+        void read( buffer_source_B *dado );
+        // implementations moved to src/source_process_threads.cpp
 };
 
 #endif
